@@ -1,8 +1,10 @@
-"""Publish the next queued image to Instagram (runs in GitHub Actions, daily around 08:30 Paris time).
+"""Publish the next queued post to Instagram (runs in GitHub Actions, daily around 08:30 Paris time).
 
 The queue/ batches are pushed here by tools/ig_post.py in Kristian's private albanianstats_agent
-repo. Every item is an image of a post already live on X (@albanianstats), with the caption
-written by tools/ig_export.py; nothing else is ever published from this repo.
+repo. Every item is an image (or a carousel of images) of a post already live on X
+(@albanianstats), with the caption written by tools/ig_export.py; nothing else is ever published
+from this repo. Order: fresh batches first (oldest batch first), then the backfill, each in its
+manifest order.
 
 Env: IG_TOKEN (Instagram User access token, secret), IG_USER_ID, optional FORCE=1 (ignore the
 time window and the one-a-day guard), DRY_RUN=1.
@@ -40,13 +42,25 @@ def posted():
 
 
 def next_item(done):
+    fresh, backfill = [], []
     for m in sorted(ROOT.glob("queue/*/manifest.json")):
         for it in sorted(json.loads(m.read_text(encoding="utf-8")), key=lambda x: x["order"]):
-            if it["post_id"] not in done:
-                it["rel"] = f"queue/{m.parent.name}/{it['image']}"
-                it["batch"] = m.parent.name
-                return it
-    return None
+            if it["post_id"] in done:
+                continue
+            it["batch"] = m.parent.name
+            (backfill if it.get("kind") == "backfill" else fresh).append(it)
+    return (fresh + backfill or [None])[0]
+
+
+def wait_ready(cid, tok):
+    for _ in range(40):
+        st = call("GET", cid, fields="status_code", access_token=tok).get("status_code")
+        if st == "FINISHED":
+            return
+        if st in ("ERROR", "EXPIRED"):
+            raise RuntimeError(f"container {cid}: {st}")
+        time.sleep(3)
+    raise RuntimeError(f"container {cid} not ready")
 
 
 def main():
@@ -64,25 +78,30 @@ def main():
     if not it:
         print("queue empty: nothing to publish")
         return
-    url = f"https://raw.githubusercontent.com/{REPO}/{BRANCH}/{it['rel']}"
-    print(f"publishing {it['rel']} (X {it['x_date']})\n{it['caption']}")
+    images = it.get("images") or [it["image"]]
+    urls = [f"https://raw.githubusercontent.com/{REPO}/{BRANCH}/queue/{it['batch']}/{name}" for name in images]
+    print(f"publishing {it['batch']} #{it['order']} ({it.get('kind', 'fresh')}, X {it['x_date']}, "
+          f"{len(urls)} image(s))\n{it['caption']}")
     if os.environ.get("DRY_RUN") == "1":
         return
     tok, uid = os.environ["IG_TOKEN"], os.environ["IG_USER_ID"]
-    cid = call("POST", f"{uid}/media", image_url=url, caption=it["caption"], access_token=tok)["id"]
-    for _ in range(30):
-        st = call("GET", cid, fields="status_code", access_token=tok).get("status_code")
-        if st == "FINISHED":
-            break
-        if st in ("ERROR", "EXPIRED"):
-            raise RuntimeError(f"container {cid}: {st}")
-        time.sleep(3)
+    if len(urls) == 1:
+        cid = call("POST", f"{uid}/media", image_url=urls[0], caption=it["caption"], access_token=tok)["id"]
+    else:                                                  # carousel: one child per image, then the parent
+        kids = []
+        for u in urls[:10]:
+            k = call("POST", f"{uid}/media", image_url=u, is_carousel_item="true", access_token=tok)["id"]
+            wait_ready(k, tok)
+            kids.append(k)
+        cid = call("POST", f"{uid}/media", media_type="CAROUSEL", children=",".join(kids),
+                   caption=it["caption"], access_token=tok)["id"]
+    wait_ready(cid, tok)
     mid = call("POST", f"{uid}/media_publish", creation_id=cid, access_token=tok)["id"]
     link = call("GET", mid, fields="permalink", access_token=tok).get("permalink", "")
     with open(POSTED, "a", encoding="utf-8") as f:
         f.write(json.dumps({"post_id": it["post_id"], "x_date": it["x_date"], "batch": it["batch"],
-                            "image": it["image"], "ig_media_id": mid, "permalink": link,
-                            "published": now.isoformat(timespec="seconds")}) + "\n")
+                            "kind": it.get("kind", "fresh"), "images": images, "ig_media_id": mid,
+                            "permalink": link, "published": now.isoformat(timespec="seconds")}) + "\n")
     print(f"published -> {link or mid}")
 
 
