@@ -45,5 +45,10 @@ jobs:
             git config user.email "actions@users.noreply.github.com"
             git add posted.jsonl
             git commit -m "published $(date -u +%F)"
-            git push
+            # the laptop may have pushed a batch meanwhile: rebase and retry, or tomorrow would repost
+            for i in 1 2 3 4 5; do
+              git pull --rebase -q origin main && git push -q origin HEAD:main && exit 0
+              sleep $((i * 10))
+            done
+            echo "could not record posted.jsonl" >&2; exit 1
           fi
