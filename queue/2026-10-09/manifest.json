@@ -1,0 +1,67 @@
+[
+ {
+  "order": 1,
+  "post_id": "2104820974436700237",
+  "x_date": "2026-09-29",
+  "x_views": 11544,
+  "image": "01_albanian_citizens_per_1_000_residents_by.jpg",
+  "source_image": "queue\\2026-09-29\\chart3.png",
+  "size": [
+   1080,
+   756
+  ],
+  "caption": "Albanian citizens per 1,000 residents by region in the EU and EFTA countries during the period 2021-22."
+ },
+ {
+  "order": 2,
+  "post_id": "2101942230273450110",
+  "x_date": "2026-09-21",
+  "x_views": 8180,
+  "image": "02_share_of_adults_with_a_surname_ending_in.jpg",
+  "source_image": "queue\\2026-09-15\\chart3.png",
+  "size": [
+   1080,
+   675
+  ],
+  "caption": "Share of adults with a surname ending in -aj by municipality, Albania and Kosovo, 2008."
+ },
+ {
+  "order": 3,
+  "post_id": "2106995299638181967",
+  "x_date": "2026-10-05",
+  "x_views": 6227,
+  "image": "03_percentage_of_facebook_friends_belonging.jpg",
+  "source_image": "queue\\2026-10-05\\chart3.png",
+  "size": [
+   1080,
+   916
+  ],
+  "caption": "Percentage of Facebook friends belonging to the other gender by region in Albania and Kosovo, January 2025."
+ },
+ {
+  "order": 4,
+  "post_id": "2100834706699026518",
+  "x_date": "2026-09-18",
+  "x_views": 5381,
+  "image": "04_share_of_adults_who_strongly_agree_that.jpg",
+  "source_image": "queue\\2026-09-18\\chart5.png",
+  "size": [
+   1080,
+   1260
+  ],
+  "caption": "Share of adults who strongly agree that work is a duty towards society, 2017-2022."
+ },
+ {
+  "order": 5,
+  "post_id": "2107357687642202369",
+  "x_date": "2026-10-06",
+  "x_views": 4664,
+  "image": "05_country_with_the_most_estimated_facebook.jpg",
+  "source_image": "queue\\2026-10-02\\chart2.png",
+  "size": [
+   1080,
+   885
+  ],
+  "caption": "Country with the most estimated Facebook friends abroad by district in Albania, January 2026."
+ }
+]

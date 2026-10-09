@@ -1,0 +1,49 @@
+name: Publish to Instagram
+
+on:
+  schedule:
+    - cron: "30 6 * * *"   # 08:30 Paris in summer time (CEST)
+    - cron: "30 7 * * *"   # 08:30 Paris in winter time (CET); publish.py posts once a day
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Publish now (ignore the time window and the one-a-day guard)"
+        type: boolean
+        default: false
+      dry_run:
+        description: "Only show what would be published"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Publish next image
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          IG_USER_ID: ${{ vars.IG_USER_ID }}
+          FORCE: ${{ inputs.force && '1' || '0' }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+        run: python publish.py
+      - name: Record what was published
+        run: |
+          if [ -n "$(git status --porcelain posted.jsonl)" ]; then
+            git config user.name "albanianstats-bot"
+            git config user.email "actions@users.noreply.github.com"
+            git add posted.jsonl
+            git commit -m "published $(date -u +%F)"
+            git push
+          fi
