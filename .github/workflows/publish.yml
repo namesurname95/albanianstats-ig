@@ -2,8 +2,11 @@ name: Publish to Instagram
 
 on:
   schedule:
-    - cron: "30 6 * * *"   # 08:30 Paris in summer time (CEST)
-    - cron: "30 7 * * *"   # 08:30 Paris in winter time (CET); publish.py posts once a day
+    # GitHub's scheduler can start runs late or skip them (it skipped 10-10 08:30), so several
+    # starts through the morning; publish.py posts only between 08:00 and 12:00 Paris and only once
+    # a day. Minutes avoid :00, when GitHub is busiest. 06:22 UTC = 08:22 CEST / 07:22 CET.
+    - cron: "22,37,52 6 * * *"
+    - cron: "7,22,37,52 7,8,9 * * *"
   workflow_dispatch:
     inputs:
       force:
