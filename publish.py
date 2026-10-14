@@ -68,8 +68,10 @@ def main():
     force = os.environ.get("FORCE") == "1"
     log = posted()
     if not force:
-        if not (8 <= now.hour < 12):                       # two UTC crons cover summer and winter time
-            print(f"{now:%H:%M} Paris: outside the 08:00-12:00 window, nothing to do")
+        # 08:00-23:00 Paris: GitHub's scheduled starts arrive 5-8 hours late for this repo (10-10..10-13 they
+        # came at 15:00-18:40 and skipped under the old 12:00 cut-off); a late post beats none
+        if not (8 <= now.hour < 23):
+            print(f"{now:%H:%M} Paris: outside the 08:00-23:00 window, nothing to do")
             return
         if any(p["published"][:10] == now.date().isoformat() for p in log):
             print("already published today")

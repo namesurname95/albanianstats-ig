@@ -7,6 +7,7 @@ on:
     # a day. Minutes avoid :00, when GitHub is busiest. 06:22 UTC = 08:22 CEST / 07:22 CET.
     - cron: "22,37,52 6 * * *"
     - cron: "7,22,37,52 7,8,9 * * *"
+    - cron: "7,37 10-19 * * *"     # late-day backups, since GitHub's starts run hours late here
   workflow_dispatch:
     inputs:
       force:
