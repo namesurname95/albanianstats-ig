@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parent
 POSTED = ROOT / "posted.jsonl"
 API = "https://graph.instagram.com/v23.0"
 TZ = ZoneInfo("Europe/Paris")
+SKIP = ROOT / "skip_dates.txt"      # one date a line (YYYY-MM-DD): no post from the queue that day, for a day Kristian posts by hand
 REPO = os.environ.get("GITHUB_REPOSITORY", "namesurname95/albanianstats-ig")
 BRANCH = os.environ.get("GITHUB_REF_NAME", "main")
 
@@ -72,6 +73,9 @@ def main():
         # came at 15:00-18:40 and skipped under the old 12:00 cut-off); a late post beats none
         if not (8 <= now.hour < 23):
             print(f"{now:%H:%M} Paris: outside the 08:00-23:00 window, nothing to do")
+            return
+        if SKIP.exists() and now.date().isoformat() in SKIP.read_text(encoding="utf-8").split():
+            print("skip date: nothing published from the queue today")
             return
         if any(p["published"][:10] == now.date().isoformat() for p in log):
             print("already published today")
